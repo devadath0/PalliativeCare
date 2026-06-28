@@ -12,9 +12,6 @@ A modern healthcare platform designed to streamline palliative care management b
 - Authentication & Authorization
 - Responsive UI
 
-## 📸 Screenshots
-
-(Add screenshots here)
 
 ## 🛠️ Tech Stack
 
