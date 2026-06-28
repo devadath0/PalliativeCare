@@ -1,0 +1,37 @@
+admin
+admin@palliative.care		password
+kimibowah@admin.com		password
+smtppalliativecare@gmail.com	PalliativePassword0
+
+
+
+
+doctor
+
+doctor@test.com			password
+
+
+
+
+service 
+
+pharmacy@test.com		password
+pharmacy1@test.com		password		mail id valid
+transport@palliative.com	password
+
+
+
+patient
+
+patient@test.com		password
+paulatreides@dune.com		Password1
+
+
+
+
+
+
+SMTP mail
+
+smtppalliativecare@gmail.com
+PalliativePassword0

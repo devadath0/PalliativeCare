@@ -1,0 +1,105 @@
+# Enable rewrite engine
+RewriteEngine On
+
+# Set base directory
+RewriteBase /palliative/
+
+# Redirect incorrect asset paths to correct locations
+RewriteRule ^assets/main\.js$ assets/js/main.js [L]
+RewriteRule ^assets/style\.css$ assets/css/style.css [L]
+
+# Allow direct access to assets
+RewriteCond %{REQUEST_URI} ^/palliative/assets/
+RewriteRule ^ - [L]
+
+# Allow direct access to images
+RewriteCond %{REQUEST_URI} ^/palliative/images/
+RewriteRule ^ - [L]
+
+# Prevent directory listing
+Options -Indexes
+
+# Set default character set
+AddDefaultCharset UTF-8
+
+# Force correct MIME types
+<IfModule mod_mime.c>
+    AddType text/css .css
+    AddType application/javascript .js
+    AddType image/jpeg .jpg .jpeg
+    AddType image/png .png
+    AddType image/gif .gif
+</IfModule>
+
+# Force the MIME type regardless of what the server says
+<IfModule mod_headers.c>
+    <FilesMatch "\.css$">
+        ForceType text/css
+        Header set Content-Type text/css
+    </FilesMatch>
+    <FilesMatch "\.js$">
+        ForceType application/javascript
+        Header set Content-Type application/javascript
+    </FilesMatch>
+</IfModule>
+
+# Direct handling for sb-admin-2.min.css
+<Files "sb-admin-2.min.css">
+    ForceType text/css
+    Header set Content-Type text/css
+</Files>
+
+# Enable CORS
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "*"
+</IfModule>
+
+# Enable compression if available
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/xml
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE application/xhtml+xml
+    AddOutputFilterByType DEFLATE application/rss+xml
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/x-javascript
+</IfModule>
+
+# Set caching if available
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpg "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+</IfModule>
+
+# PHP settings
+<IfModule mod_php.c>
+    php_value upload_max_filesize 10M
+    php_value post_max_size 10M
+    php_value max_execution_time 300
+    php_value max_input_time 300
+</IfModule>
+
+# Error handling
+ErrorDocument 404 /palliative/index.php?module=error&action=not_found
+ErrorDocument 500 /palliative/500.php
+
+# Security headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-XSS-Protection "1; mode=block"
+    Header set X-Frame-Options "SAMEORIGIN"
+</IfModule>
+
+# Rewrite rules
+<IfModule mod_rewrite.c>
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ index.php?url=$1 [QSA,L]
+</IfModule> 

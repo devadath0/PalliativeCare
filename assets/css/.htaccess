@@ -1,0 +1,24 @@
+# Set proper MIME type for CSS files
+<IfModule mod_mime.c>
+    AddType text/css .css
+</IfModule>
+
+# Force the MIME type for CSS files
+<IfModule mod_headers.c>
+    <FilesMatch "\.css$">
+        ForceType text/css
+        Header set Content-Type text/css
+    </FilesMatch>
+</IfModule>
+
+# Specific rule for sb-admin-2.min.css
+<Files "sb-admin-2.min.css">
+    ForceType text/css
+    Header set Content-Type text/css
+</Files>
+
+# Allow direct access to CSS files
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^.*$ - [L]
+</IfModule> 

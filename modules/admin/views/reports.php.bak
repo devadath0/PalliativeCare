@@ -1,0 +1,337 @@
+<?php
+/**
+ * Admin - Reports
+ */
+
+// Check if user is logged in and is an admin
+if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
+    header('Location: index.php?module=auth&action=login&type=admin');
+    exit;
+}
+
+// Set page title and current page for navigation
+$page_title = 'Reports';
+$current_page = 'reports';
+
+// Include header
+require_once 'modules/admin/views/includes/header.php';
+require_once('tcpdf/tcpdf.php');
+
+?>
+
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>Reports</h2>
+            <p class="text-muted">View and analyze system data</p>
+        </div>
+    </div>
+
+    <!-- Report Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" action="index.php" class="row g-3">
+                <input type="hidden" name="module" value="admin">
+                <input type="hidden" name="action" value="reports">
+                
+                <div class="col-md-3">
+                    <label for="report_type" class="form-label">Report Type</label>
+                    <select name="report_type" id="report_type" class="form-select">
+                        <option value="patients" <?php echo $report_type === 'patients' ? 'selected' : ''; ?>>Patient Statistics</option>
+                        <option value="doctors" <?php echo $report_type === 'doctors' ? 'selected' : ''; ?>>Doctor Statistics</option>
+                        <option value="services" <?php echo $report_type === 'services' ? 'selected' : ''; ?>>Service Usage</option>
+                        <option value="financial" <?php echo $report_type === 'financial' ? 'selected' : ''; ?>>Financial Summary</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-3">
+                    <label for="date_range" class="form-label">Date Range</label>
+                    <select name="date_range" id="date_range" class="form-select">
+                        <option value="today" <?php echo $date_range === 'today' ? 'selected' : ''; ?>>Today</option>
+                        <option value="week" <?php echo $date_range === 'week' ? 'selected' : ''; ?>>This Week</option>
+                        <option value="month" <?php echo $date_range === 'month' ? 'selected' : ''; ?>>This Month</option>
+                        <option value="year" <?php echo $date_range === 'year' ? 'selected' : ''; ?>>This Year</option>
+                        <option value="custom" <?php echo $date_range === 'custom' ? 'selected' : ''; ?>>Custom Range</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-3 custom-date <?php echo $date_range !== 'custom' ? 'd-none' : ''; ?>">
+                    <label for="start_date" class="form-label">Start Date</label>
+                    <input type="date" class="form-control" id="start_date" name="start_date" 
+                           value="<?php echo $start_date; ?>">
+                </div>
+                
+                <div class="col-md-3 custom-date <?php echo $date_range !== 'custom' ? 'd-none' : ''; ?>">
+                    <label for="end_date" class="form-label">End Date</label>
+                    <input type="date" class="form-control" id="end_date" name="end_date" 
+                           value="<?php echo $end_date; ?>">
+                </div>
+                
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-filter"></i> Apply Filters
+                    </button>
+                    <a href="index.php?module=admin&action=reports" class="btn btn-secondary">
+                        <i class="fas fa-undo"></i> Reset
+                    </a>
+                    <button type="button" class="btn btn-success" id="exportBtn" data-bs-toggle="modal" data-bs-target="#exportModal">
+                        <i class="fas fa-download"></i> Export Report
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Report Content -->
+    <div class="card">
+        <div class="card-body">
+            <?php if ($report_type === 'patients'): ?>
+                <!-- Patient Statistics -->
+                <h4>Patient Statistics</h4>
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">Total Patients</h5>
+                                <h2><?php echo $stats['total_patients']; ?></h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">Active Patients</h5>
+                                <h2><?php echo $stats['active_patients']; ?></h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-info text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">New Patients</h5>
+                                <h2><?php echo $stats['new_patients']; ?></h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">Discharged</h5>
+                                <h2><?php echo $stats['discharged_patients']; ?></h2>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+            <?php elseif ($report_type === 'doctors'): ?>
+                <!-- Doctor Statistics -->
+                <h4>Doctor Statistics</h4>
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">Total Doctors</h5>
+                                <h2><?php echo $stats['total_doctors']; ?></h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-success text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">Available Doctors</h5>
+                                <h2><?php echo $stats['available_doctors']; ?></h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-info text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">On Leave</h5>
+                                <h2><?php echo $stats['doctors_on_leave']; ?></h2>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            <?php elseif ($report_type === 'services'): ?>
+                <!-- Service Usage -->
+                <h4>Service Usage Statistics</h4>
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">Total Services</h5>
+                                <h2><?php echo $stats['total_services']; ?></h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">Active Services</h5>
+                                <h2><?php echo $stats['active_services']; ?></h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-info text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">Service Providers</h5>
+                                <h2><?php echo $stats['service_providers'] ?? 0; ?></h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">Total Sessions</h5>
+                                <h2><?php echo $stats['total_sessions'] ?? 0; ?></h2>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            <?php elseif ($report_type === 'financial'): ?>
+                <!-- Financial Summary -->
+                <h4>Financial Summary</h4>
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">Total Revenue</h5>
+                                <h2>$<?php echo number_format($stats['total_revenue'] ?? 0, 2); ?></h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">Paid Invoices</h5>
+                                <h2>$<?php echo number_format($stats['paid_invoices'] ?? 0, 2); ?></h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">Pending Payments</h5>
+                                <h2>$<?php echo number_format($stats['pending_payments'], 2); ?></h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-info text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">Average Invoice</h5>
+                                <h2>$<?php echo number_format($stats['average_invoice'] ?? 0, 2); ?></h2>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <!-- Detailed Report Table -->
+            <?php if (!empty($detailed_data)): ?>
+                <div class="table-responsive mt-4">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <?php foreach (array_keys($detailed_data[0]) as $header): ?>
+                                    <th><?php echo htmlspecialchars(ucwords(str_replace('_', ' ', $header))); ?></th>
+                                <?php endforeach; ?>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($detailed_data as $row): ?>
+                                <tr>
+                                    <?php foreach ($row as $value): ?>
+                                        <td><?php echo htmlspecialchars($value); ?></td>
+                                    <?php endforeach; ?>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php else: ?>
+                <div class="alert alert-info mt-4">
+                    No detailed data available for the selected filters.
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
+</div>
+
+<!-- Export Modal -->
+<div class="modal fade" id="exportModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Export Report</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="exportForm" method="GET" action="index.php">
+                <input type="hidden" name="module" value="admin">
+                <input type="hidden" name="action" value="export_report">
+                <input type="hidden" name="type" value="<?php echo $report_type; ?>">
+                <input type="hidden" name="start_date" value="<?php echo $start_date; ?>">
+                <input type="hidden" name="end_date" value="<?php echo $end_date; ?>">
+                <input type="hidden" id="export_format" name="format" value="">
+                
+                <div class="modal-body">
+                    <div class="mb-3">                        
+                        <div class="btn-group w-100">
+                            <button type="button" class="btn btn-outline-primary export-btn" data-format="csv">
+                                <i class="fas fa-file-csv"></i> Export as CSV
+                            </button>
+                            <button type="button" class="btn btn-outline-danger export-btn" data-format="pdf">
+                                <i class="fas fa-file-pdf"></i> Export as PDF
+                            </button>
+                        </div>
+                    </div>    
+                </div>
+            </form>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle date range selection
+    const dateRange = document.getElementById('date_range');
+    const customDateFields = document.querySelectorAll('.custom-date');
+    const exportBtn = document.getElementById('exportBtn');
+    const exportModal = new bootstrap.Modal(document.getElementById('exportModal'));
+    
+    // Show export modal when clicking the export button
+    exportBtn.addEventListener('click', function() {
+        exportModal.show();
+    });
+
+    dateRange.addEventListener('change', function() {
+        if (this.value === 'custom') {
+            customDateFields.forEach(field => field.classList.remove('d-none'));
+        } else {
+            customDateFields.forEach(field => field.classList.add('d-none'));
+        }
+    });
+
+    // Handle export format selection and form submission
+    const exportBtns = document.querySelectorAll('.export-btn');
+    exportBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const format = this.dataset.format;
+            document.getElementById('export_format').value = format;
+            document.getElementById('exportForm').submit();
+            exportModal.hide();
+        });
+    });
+});
+</script>
+
+<?php
+// Include footer
+require_once 'modules/admin/views/includes/footer.php';
+?>
